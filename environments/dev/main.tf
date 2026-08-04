@@ -1,6 +1,6 @@
 resource "azurerm_resource_group" "main" {
 
-  name     = var.resource_group_name
+  name = var.resource_group_name
 
   location = var.location
 
@@ -8,23 +8,23 @@ resource "azurerm_resource_group" "main" {
 
 resource "random_string" "suffix" {
 
-  length  = 5
+  length = 5
 
   special = false
 
-  upper   = false
+  upper = false
 
 }
 
 resource "azurerm_storage_account" "storage" {
 
-  name                     = "stsecret${random_string.suffix.result}"
+  name = "stsecret${random_string.suffix.result}"
 
-  resource_group_name      = azurerm_resource_group.main.name
+  resource_group_name = azurerm_resource_group.main.name
 
-  location                 = azurerm_resource_group.main.location
+  location = azurerm_resource_group.main.location
 
-  account_tier             = "Standard"
+  account_tier = "Standard"
 
   account_replication_type = "LRS"
 
@@ -35,17 +35,17 @@ data "azurerm_client_config" "current" {}
 
 resource "azurerm_key_vault" "kv" {
 
-  name                = "kv-secret-${random_string.suffix.result}"
+  name = "kv-secret-${random_string.suffix.result}"
 
-  location            = azurerm_resource_group.main.location
+  location = azurerm_resource_group.main.location
 
   resource_group_name = azurerm_resource_group.main.name
 
-  tenant_id           = data.azurerm_client_config.current.tenant_id
+  tenant_id = data.azurerm_client_config.current.tenant_id
 
-  sku_name            = "standard"
+  sku_name = "standard"
 
-  enable_rbac_authorization = true
+  rbac_authorization_enabled = true
 
   soft_delete_retention_days = 7
 
@@ -56,29 +56,29 @@ resource "azurerm_key_vault" "kv" {
 
 resource "azurerm_log_analytics_workspace" "logs" {
 
-  name                = "law-secret-${random_string.suffix.result}"
+  name = "law-secret-${random_string.suffix.result}"
 
-  location            = azurerm_resource_group.main.location
+  location = azurerm_resource_group.main.location
 
   resource_group_name = azurerm_resource_group.main.name
 
-  sku                 = "PerGB2018"
+  sku = "PerGB2018"
 
-  retention_in_days   = 30
+  retention_in_days = 30
 
 }
 
 resource "azurerm_application_insights" "appinsights" {
 
-  name                = "appi-secret-${random_string.suffix.result}"
+  name = "appi-secret-${random_string.suffix.result}"
 
-  location            = azurerm_resource_group.main.location
+  location = azurerm_resource_group.main.location
 
   resource_group_name = azurerm_resource_group.main.name
 
-  workspace_id        = azurerm_log_analytics_workspace.logs.id
+  workspace_id = azurerm_log_analytics_workspace.logs.id
 
-  application_type    = "web"
+  application_type = "web"
 
 }
 
@@ -91,5 +91,31 @@ resource "azurerm_key_vault_secret" "database_password" {
   key_vault_id = azurerm_key_vault.kv.id
 
   expiration_date = "2026-08-15T00:00:00Z"
+
+}
+
+module "function" {
+
+  source = "../../modules/function"
+
+  location = azurerm_resource_group.main.location
+
+  resource_group_name = azurerm_resource_group.main.name
+
+  storage_account_name = azurerm_storage_account.storage.name
+
+  storage_account_key = azurerm_storage_account.storage.primary_access_key
+
+  random_suffix = random_string.suffix.result
+
+}
+
+module "communication" {
+
+  source = "../../modules/communication"
+
+  communication_name = "acs-secret-${random_string.suffix.result}"
+
+  resource_group_name = azurerm_resource_group.main.name
 
 }
