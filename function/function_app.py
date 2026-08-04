@@ -25,9 +25,7 @@ def RotateSecret(mytimer: func.TimerRequest) -> None:
     logging.info("Azure Secret Rotation Started")
     logging.info("===================================")
 
-    # ----------------------------------------
     # Environment Variables
-    # ----------------------------------------
 
     key_vault_name = os.environ["KEY_VAULT_NAME"]
 
@@ -37,9 +35,7 @@ def RotateSecret(mytimer: func.TimerRequest) -> None:
 
     recipient = os.environ["EMAIL_RECIPIENT"]
 
-    # ----------------------------------------
     # Connect to Key Vault
-    # ----------------------------------------
 
     credential = AzureCliCredential()
 
@@ -56,9 +52,7 @@ def RotateSecret(mytimer: func.TimerRequest) -> None:
 
     logging.info(f"Secret Name: {secret.name}")
 
-    # ----------------------------------------
     # Check Expiry
-    # ----------------------------------------
 
     if secret.properties.expires_on is None:
         logging.warning("Secret has no expiration date.")
@@ -77,9 +71,7 @@ def RotateSecret(mytimer: func.TimerRequest) -> None:
     logging.info("Secret is nearing expiration.")
     logging.info("Generating new password...")
 
-    # ----------------------------------------
     # Generate Password
-    # ----------------------------------------
 
     alphabet = (
         string.ascii_letters +
@@ -94,9 +86,7 @@ def RotateSecret(mytimer: func.TimerRequest) -> None:
 
     new_expiry = datetime.now(timezone.utc) + timedelta(days=365)
 
-    # ----------------------------------------
     # Update Key Vault
-    # ----------------------------------------
 
     client.set_secret(
         secret_name,
@@ -109,9 +99,7 @@ def RotateSecret(mytimer: func.TimerRequest) -> None:
     logging.info(f"New Expiry: {new_expiry}")
     logging.info("===================================")
 
-    # ----------------------------------------
     # Send Email
-    # ----------------------------------------
 
     logging.info("Sending email notification...")
 
