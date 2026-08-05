@@ -68,6 +68,30 @@ The function runs automatically on a scheduled timer without requiring manual in
 - Modular Terraform structure
 - Timer-triggered serverless execution
 
+# Repository Structure
+
+```
+azure-secret-rotation-pipeline
+│
+├── environments
+│   └── dev
+│
+├── modules
+│   ├── communication
+│   ├── function-app
+│   ├── key-vault
+│   └── storage
+│
+├── function
+│   ├── function_app.py
+│   ├── requirements.txt
+│   ├── host.json
+│   └── local.settings.json.example
+
+```
+
+---
+
 
 # Project Workflow
 
@@ -84,5 +108,71 @@ The function runs automatically on a scheduled timer without requiring manual in
 7. Logs the execution.
 
 ---
+## Getting Started
 
+### Prerequisites
+
+- An [Azure subscription](https://azure.microsoft.com/free/) (a student/free-tier subscription works)
+- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.5
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) installed and authenticated (`az login`)
+- Python 3.9+ (for local testing of the Function code)
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Kel202/azure-secret-rotation-pipeline.git
+cd azure-secret-rotation-pipeline
+```
+
+### 2. Configure your environment
+
+Copy the example variables file and fill in your own values (subscription ID, resource group name, notification email, etc.). This file is git-ignored so your values never get committed.
+
+```bash
+cd environments/dev
+cp terraform.tfvars.example terraform.tfvars
+```
+
+Then edit `terraform.tfvars` with your own values.
+
+### 3. Initialize and deploy
+
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
+Terraform will provision the resource group, Key Vault, Storage Account, Function App, and Communication Services resource, then deploy the Python rotation function.
+
+### 4. Verify
+
+- Check the Azure Function App in the Portal to confirm the timer trigger is running.
+- Check Key Vault → Secrets to see the target secret and its expiry date.
+- Trigger a manual run (or wait for the timer) and confirm the notification email arrives.
+
+### 5. Tear down
+
+```bash
+terraform destroy
+```
+
+---
+
+## Security Considerations
+
+
+This project was built with cloud security best practices in mind, not just automation:
+
+- **No hardcoded credentials.** Authentication to Azure Key Vault is handled via Azure CLI credentials locally and is designed to use a **Managed Identity** in production rather than storing a service principal secret in code or config.
+- **Least-privilege access.** The Function's identity is scoped with Key Vault access policies / RBAC limited to only the permissions it needs (get, list, set secret) — not full Key Vault Administrator rights.
+- **Secrets never leave Key Vault in plaintext.** New passwords are generated and written directly to Key Vault; they are not logged, emailed, or exposed in Function output.
+- **Sensitive files excluded from version control.** `.tfstate`, `.tfvars`, and `local.settings.json` are all git-ignored, since they can contain subscription IDs, secrets, or connection strings.
+- **Auditability.** Every rotation run is logged, so there's a traceable record of when a secret was rotated and by what process — supporting audit and compliance requirements.
+- **Fail-safe notification.** If a secret is approaching expiry and rotation succeeds (or fails), the operations team is notified via Azure Communication Services rather than relying on someone remembering to check.
+
+**Known limitations / next steps:**
+- Local development currently uses Azure CLI auth rather than Managed Identity — migrating fully to Managed Identity is a planned improvement.
+- No automated tests yet for the rotation logic (unit tests planned).
+- Currently single-environment (`dev`); a `prod` environment folder would need separate state and access controls.
       
