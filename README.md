@@ -37,6 +37,10 @@ The function runs automatically on a scheduled timer without requiring manual in
 
 ---
 
+# Architecture
+![Architecture](docs/diagram-architecture.png)   
+
+
 # Technologies Used
 
 | Technology | Purpose |
