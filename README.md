@@ -111,7 +111,23 @@ azure-secret-rotation-pipeline
    - Extends the expiration date.
    - Sends an email notification.
 7. Logs the execution.
+---
+## Deployment Verification
+### Terraform apply — infrastructure provisioned successfully
+![Terraform apply output](docs/terraformdev.png)
+All modules deployed cleanly with no errors — resource group, Key Vault, Storage Account, Function App, and Communication Services all provisioned in a single `terraform apply`.
 
+### Azure Portal - resources deployed
+![Azure portal deployed](docs/resourcegrpdev.png)
+All resouces are up and running in Azure — the resource group and resources after being provisioned by Terraform.
+
+### Key Vault — secret rotated
+![Key Vault secret rotated](docs/databasepassword.png)
+The secret's version history and expiry date confirm the rotation ran and extended the lifetime as expected.
+
+### Email notification received
+![Rotation email notification](docs/email.png)
+Confirmation email sent via Azure Communication Services immediately after a successful rotation.
 ---
 ## Getting Started
 
