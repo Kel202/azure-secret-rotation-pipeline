@@ -166,6 +166,12 @@ terraform apply
 
 Terraform will provision the resource group, Key Vault, Storage Account, Function App and Communication Service resource. The function code is then published separately:
 
+```bash
+cd ../../function
+func azure functionapp publish <function-app-name>
+```
+
+
 ### 4. Verify
 
 - Check the Azure Function App in the Portal to confirm the timer trigger is running.
@@ -185,15 +191,15 @@ terraform destroy
 
 This project was built with cloud security best practices in mind, not just automation:
 
-- **No hardcoded credentials.** Authentication to Azure Key Vault is handled via Azure CLI credentials locally and is designed to use a **Managed Identity** in production rather than storing a service principal secret in code or config.
-- **Least-privilege access.** The Function's identity is scoped with Key Vault access policies / RBAC limited to only the permissions it needs (get, list, set secret) — not full Key Vault Administrator rights.
+- **No hardcoded credentials.** The function authenticates to Key Vault with Azure CLI credentials during local development, so no service principal secret is stored in code or config. The Function App is provisioned with a system-assigned managed identity, and moving the function itself to that identity is a planned improvement (see below).
+- **Scoped access.** Key Vault uses RBAC authorization rather than access policies. The function only needs to get and set secrets, and the target is a role limited to secret operations on this one vault, not Key Vault Administrator.
 - **Secrets never leave Key Vault in plaintext.** New passwords are generated and written directly to Key Vault; they are not logged, emailed, or exposed in Function output.
 - **Sensitive files excluded from version control.** `.tfstate`, `.tfvars`, and `local.settings.json` are all git-ignored, since they can contain subscription IDs, secrets, or connection strings.
 - **Auditability.** Every rotation run is logged, so there's a traceable record of when a secret was rotated and by what process — supporting audit and compliance requirements.
 - **Fail-safe notification.** If a secret is approaching expiry and rotation succeeds (or fails), the operations team is notified via Azure Communication Services rather than relying on someone remembering to check.
 
 **Known limitations / next steps:**
-- Local development currently uses Azure CLI auth rather than Managed Identity — migrating fully to Managed Identity is a planned improvement.
+- The deployed Function App has a system-assigned managed identity, but the function code currently uses `AzureCliCredential` and the identity has no Key Vault role assignment yet. Next step: switch to `DefaultAzureCredential` and grant the identity a scoped RBAC role (this needs Owner or User Access Administrator rights, which my student subscription doesn't provide).
 - No automated tests yet for the rotation logic (unit tests planned).
 - Currently single-environment (`dev`); a `prod` environment folder would need separate state and access controls.
       
