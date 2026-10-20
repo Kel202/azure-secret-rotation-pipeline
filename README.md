@@ -28,7 +28,7 @@ The objective was not simply to automate a task, but to build a solution that re
 
 # Project Overview
 
-This project provisions Azure infrastructure using Terraform and deploys a Python Azure Function that automatically:
+This project provisions Azure infrastructure using Terraform and includes a Python Azure Function (published separately with Azure Function Core Tools) that automatically:
 
 - Monitors Azure Key Vault secrets
 - Detects secrets nearing expiration
@@ -101,7 +101,7 @@ azure-secret-rotation-pipeline
 # Project Workflow
 
 1. Azure Function starts on a timer.
-2. Authenticates using Azure CLI credentials.
+2. Authenticates to Azure using CLI credentials (local development).
 3. Connects to Azure Key Vault.
 4. Reads the target secret.
 5. Calculates the remaining lifetime.
@@ -164,7 +164,7 @@ terraform plan
 terraform apply
 ```
 
-Terraform will provision the resource group, Key Vault, Storage Account, Function App, and Communication Services resource, then deploy the Python rotation function.
+Terraform will provision the resource group, Key Vault, Storage Account, Function App and Communication Service resource. The function code is then published separately:
 
 ### 4. Verify
 
